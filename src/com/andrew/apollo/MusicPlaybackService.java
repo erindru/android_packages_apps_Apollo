@@ -16,6 +16,8 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -62,8 +64,10 @@ import com.andrew.apollo.utils.PreferenceUtils;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.Set;
 import java.util.TreeSet;
 
 /**
@@ -482,6 +486,11 @@ public class MusicPlaybackService extends Service {
      * Favorites database
      */
     private FavoritesStore mFavoritesCache;
+    
+    /**
+     * Bluetooth Adapter
+     */
+    private BluetoothAdapter mBluetoothAdapter;
 
     /**
      * {@inheritDoc}
@@ -591,8 +600,13 @@ public class MusicPlaybackService extends Service {
         filter.addAction(PREVIOUS_ACTION);
         filter.addAction(REPEAT_ACTION);
         filter.addAction(SHUFFLE_ACTION);
+        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
         // Attach the broadcast listener
         registerReceiver(mIntentReceiver, filter);
+        
+        // Create our Bluetooth adapter for later use
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        
 
         // Initialize the wake lock
         final PowerManager powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
@@ -613,6 +627,22 @@ public class MusicPlaybackService extends Service {
         reloadQueue();
         notifyChange(QUEUE_CHANGED);
         notifyChange(META_CHANGED);
+    }
+    
+    /**
+     * Registers a listener that listens for the state of Bluetooth.
+     * When Bluetooth is connected, check that the device that we just connected to is in the list of devices we
+     * should autoplay on. If it is, start playing if we are not already.
+     */
+    private void handleBluetoothConnection(BluetoothDevice device) {
+    	if (mBluetoothAdapter != null && device != null) {
+    		//check that the connected device is in our list of devices
+    		Set<String> allowedDevices = mPreferences.getStringSet(PreferenceUtils.AUTOPLAY_ON_BLUETOOTH_CONNECTION_DEVICES, new HashSet<String>());
+    		String currentDevice = device.getAddress();
+    		if (allowedDevices.contains(currentDevice) && !this.isPlaying()) {
+    			this.play();
+    		}
+    	}
     }
 
     /**
@@ -2291,6 +2321,7 @@ public class MusicPlaybackService extends Service {
         @Override
         public void onReceive(final Context context, final Intent intent) {
             final String command = intent.getStringExtra(CMDNAME);
+            String action = intent.getAction();
 
             if (AppWidgetSmall.CMDAPPWIDGETUPDATE.equals(command)) {
                 final int[] small = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS);
@@ -2305,6 +2336,9 @@ public class MusicPlaybackService extends Service {
             } else if (RecentWidgetProvider.CMDAPPWIDGETUPDATE.equals(command)) {
                 final int[] recent = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS);
                 mRecentWidgetProvider.performUpdate(MusicPlaybackService.this, recent);
+            } else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
+            	BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+            	handleBluetoothConnection(device);
             } else {
                 handleCommandIntent(intent);
             }

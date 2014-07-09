@@ -77,6 +77,12 @@ public final class PreferenceUtils {
 
     // Key used to set the overall theme color
     public static final String DEFAULT_THEME_COLOR = "default_theme_color";
+    
+    // Key used to set whether or not we should automatically start playing when we are connected to Bluetooth
+    public static final String AUTOPLAY_ON_BLUETOOTH_CONNECTION = "autoplay_on_bluetooth_connection";
+    
+    // Key used to set which Bluetooth devices we should autoplay on. This is because we dont want to autoplay when we connect to our Handsfree kit for example, but we do want to autoplay when we connect to our car head unit
+    public static final String AUTOPLAY_ON_BLUETOOTH_CONNECTION_DEVICES = "autoplay_on_bluetooth_connection_devices";
 
     private static PreferenceUtils sInstance;
 
@@ -382,5 +388,13 @@ public final class PreferenceUtils {
         final String defaultValue = "simple";
         return mPreferences.getString(which, defaultValue).equals(grid);
     }
+    
+    /**    
+     * @return True if the user has checked 'Autoplay on Bluetooth Connection', false otherwise
+     */
+    public boolean shouldAutoplayOnBluetoothConnection() {
+    	return mPreferences.getBoolean(AUTOPLAY_ON_BLUETOOTH_CONNECTION, false);
+    }
+ 
 
 }
