@@ -11,6 +11,8 @@
 
 package com.andrew.apollo.utils;
 
+import java.util.Set;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -392,8 +394,16 @@ public final class PreferenceUtils {
     /**    
      * @return True if the user has checked 'Autoplay on Bluetooth Connection', false otherwise
      */
-    public boolean shouldAutoplayOnBluetoothConnection() {
+    public boolean isAutoplayOnBluetoothEnabled() {
     	return mPreferences.getBoolean(AUTOPLAY_ON_BLUETOOTH_CONNECTION, false);
+    }
+    
+    /**
+     * Gets the list of bluetooth device IDs that the user has allowed
+     * @return A set of strings where each string is the Bluetooth DeviceID of an allowed device
+     */
+    public Set<String> getAllowedBluetoothDevices() {
+    	return mPreferences.getStringSet(AUTOPLAY_ON_BLUETOOTH_CONNECTION_DEVICES, null);
     }
  
 
