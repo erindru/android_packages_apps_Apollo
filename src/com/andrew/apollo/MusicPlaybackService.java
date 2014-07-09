@@ -633,13 +633,19 @@ public class MusicPlaybackService extends Service {
      * Registers a listener that listens for the state of Bluetooth.
      * When Bluetooth is connected, check that the device that we just connected to is in the list of devices we
      * should autoplay on. If it is, start playing if we are not already.
+     * 
+     * @param device The BluetoothDevice that just connected
      */
     private void handleBluetoothConnection(BluetoothDevice device) {
     	if (mBluetoothAdapter != null && device != null) {
-    		//check that the connected device is in our list of devices
+    		if (D) { Log.d(TAG, String.format("Bluetooth device %s (%s) connected", device.getAddress(), device.getName())); }
+    		
     		Set<String> allowedDevices = mPreferences.getStringSet(PreferenceUtils.AUTOPLAY_ON_BLUETOOTH_CONNECTION_DEVICES, new HashSet<String>());
     		String currentDevice = device.getAddress();
+    		
+    		//start playing if the connected device is in our list of devices
     		if (allowedDevices.contains(currentDevice) && !this.isPlaying()) {
+    			if (D) { Log.d(TAG, "Bluetooth device was in the list of allowed devices, starting playback."); }
     			this.play();
     		}
     	}
